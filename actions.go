@@ -47,7 +47,7 @@ func (im *IM) serveSendMsg(raw json.RawMessage) {
 		panic(BadRequest("action json decode err"))
 	}
 
-	c := im.Conns.Get(ac.Conn)
+	c := im.conns.Get(ac.Conn)
 	if c != nil {
 		panic(BadRequest("conn not found."))
 	}
@@ -62,7 +62,7 @@ func (im *IM) serveCloseConn(raw json.RawMessage) {
 		panic(BadRequest("action json decode err"))
 	}
 
-	c := im.Conns.Get(ac.Conn)
+	c := im.conns.Get(ac.Conn)
 	if c != nil {
 		c.Close()
 	}
@@ -75,7 +75,7 @@ func (im *IM) serveBroadcast(raw json.RawMessage) {
 		panic(BadRequest("action json decode err"))
 	}
 
-	im.Conns.Send(ac.Msg)
+	im.conns.Send(ac.Msg)
 }
 
 func (im *IM) serveRoomBroadcast(raw json.RawMessage) {
@@ -85,7 +85,7 @@ func (im *IM) serveRoomBroadcast(raw json.RawMessage) {
 		panic(BadRequest("action json decode err"))
 	}
 
-	r := im.Rooms.Get(ac.Room)
+	r := im.rooms.Get(ac.Room)
 	if r == nil {
 		panic(BadRequest("room not found."))
 	}
@@ -100,8 +100,8 @@ func (im *IM) serveConnAddRoom(raw json.RawMessage) {
 		panic(BadRequest("action json decode err"))
 	}
 
-	r := im.Rooms.Get(ac.Room)
-	c := im.Conns.Get(ac.Conn)
+	r := im.rooms.Get(ac.Room)
+	c := im.conns.Get(ac.Conn)
 	if r == nil {
 		panic(BadRequest("room not found."))
 	}
@@ -121,8 +121,8 @@ func (im *IM) serveConnAddRoom(raw json.RawMessage) {
 		panic(BadRequest("action json decode err"))
 	}
 
-	r := im.Rooms.Get(ac.Room)
-	c := im.Conns.Get(ac.Conn)
+	r := im.rooms.Get(ac.Room)
+	c := im.conns.Get(ac.Conn)
 	if r == nil {
 		panic(BadRequest("room not found."))
 	}
@@ -134,6 +134,6 @@ func (im *IM) serveConnAddRoom(raw json.RawMessage) {
 	empty := r.Del(c)
 	c.delRoom(r)
 	if empty {
-		im.Rooms.GC(ac.Room)
+		im.rooms.GC(ac.Room)
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"sync/atomic"
 )
 
 // serverWs handles webocket requests from the peer.
@@ -14,13 +15,7 @@ func (im *IM) ServeWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	now := atomic.AddInt32(&im.ConnNum, 1)
-
-	defer func() {
-		atomic.AddInt32(&im.ConnNum, -1)
-	}()
-
-	if now > im.MaxConn {
+	if atomic.LoadInt32(&im.conns.num) > im.MaxConn {
 		log.Println("Server Is Too Busy!", r.RemoteAddr)
 		http.Error(w, "Service Unavailable", 503)
 		return
@@ -70,13 +65,16 @@ func (im *IM) ServeAction(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
+	ip := net.ParseIP(strings.Split(RemoteAddr, ":")[0])
+
 	allow = false
-	for _, ip := range im.AllowLocalIP {
-		if strings.Index(r.RemoteAddr, ip) == 0 {
+	for _, ipnet := range im.LocalIPs {
+		if ipnet.Contains(ip) {
 			allow = true
-			return
+			break
 		}
 	}
+
 	if !allow {
 		log.Println("Unauthorized Visit:", r.RemoteAddr)
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)

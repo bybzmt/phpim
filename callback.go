@@ -36,7 +36,7 @@ func (im *IM) connectCallback(c *conn) error {
 
 	c.Id = r.Id
 
-	im.Conns.Add(r.Id, c)
+	im.conns.Add(r.Id, c)
 
 	im.serveAction(ca.actions)
 
@@ -92,9 +92,9 @@ func (im *IM) disconnectCallback(c *conn) {
 		log.Println(errors.New("callback return fail."))
 	}
 
-	for _, room := range c.Rooms {
+	for _, room := range c.rooms {
 		room.Del(c)
 	}
 
-	im.Conns.Del(c.Id, c)
+	im.conns.Del(c.Id, c)
 }

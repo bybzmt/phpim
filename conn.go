@@ -1,4 +1,4 @@
-package phpim
+Package phpim
 
 import (
 	"github.com/gorilla/websocket"
