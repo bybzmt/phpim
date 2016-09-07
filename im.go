@@ -1,37 +1,37 @@
 package phpim
 
 import (
-	"log"
+	"github.com/gorilla/websocket"
 	"net"
 	"net/http"
-	"strconv"
-	"strings"
+	"net/url"
+	"sync"
 	"time"
 )
 
 type IM struct {
-	L            sync.Mutex
-	LocalIPs []net.IPNet
-	Origins  []string
-	MaxSingleIP  int16
-	IPCounter    map[net.IP]int16
-	CallbackUrl  string
-	MaxConn      int32
-	conns        Global
-	rooms        Rooms
-	MaxMsgSize   int
-	writeWait    time.Duration
-	pongWait     time.Duration
-	pingPeriod   time.Duration
-	upgrader websocket.Upgrader
+	L           sync.Mutex
+	LocalIPs    []net.IPNet
+	Origins     []string
+	MaxSingleIP int16
+	IPCounter   map[string]int16
+	CallbackUrl string
+	MaxConn     int32
+	conns       Global
+	rooms       Rooms
+	MaxMsgSize  int64
+	writeWait   time.Duration
+	pongWait    time.Duration
+	pingPeriod  time.Duration
+	upgrader    websocket.Upgrader
 }
 
 func NewIM() *IM {
-	im := IM{}
-	im.IpCounter = make(map[net.IP]int16, 2000)
+	im := new(IM)
+	im.IPCounter = make(map[string]int16, 2000)
 	im.MaxMsgSize = 512
 
-	im.global.init()
+	im.conns.init()
 	im.rooms.init()
 
 	im.writeWait = 10 * time.Second
@@ -42,7 +42,7 @@ func NewIM() *IM {
 		ReadBufferSize:   1024,
 		WriteBufferSize:  1024,
 		HandshakeTimeout: 5 * time.Second,
-		CheckOrigin: im.checkOrigin
+		CheckOrigin:      im.checkOrigin,
 	}
 
 	return im
@@ -52,11 +52,11 @@ func (im *IM) addIPCounter(ip net.IP, i int16) int16 {
 	im.L.Lock()
 	defer im.L.Unlock()
 
-	im.IPCounter[ip] += i
+	im.IPCounter[ip.String()] += i
 
-	num := im.IPCounter[ip]
+	num := im.IPCounter[ip.String()]
 	if num < 1 {
-		delete(im.IPCounter, ip)
+		delete(im.IPCounter, ip.String())
 	}
 
 	return num
@@ -79,4 +79,3 @@ func (im *IM) checkOrigin(r *http.Request) bool {
 	}
 	return false
 }
-

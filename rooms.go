@@ -6,15 +6,15 @@ import (
 
 type Global struct {
 	l     sync.RWMutex
-	num      int32
-	conns map[string]*conn
+	num   int32
+	conns map[string]*connection
 }
 
 func (g *Global) init() {
-	g.conns = make(map[string]*conn, 10000)
+	g.conns = make(map[string]*connection, 10000)
 }
 
-func (r *Global) Add(id string, c *conn) {
+func (r *Global) Add(id string, c *connection) {
 	r.l.Lock()
 	defer r.l.Unlock()
 
@@ -30,7 +30,7 @@ func (r *Global) Del(id string) {
 	delete(r.conns, id)
 }
 
-func (r *Global) Get(id string) *conn {
+func (r *Global) Get(id string) *connection {
 	r.l.RLock()
 	defer r.l.RLock()
 
@@ -51,23 +51,23 @@ func (r *Global) Send(msg []byte) {
 type Room struct {
 	l     sync.RWMutex
 	num   int
-	conns map[*conn]struct{}
+	conns map[*connection]struct{}
 }
 
 func (r *Room) init() *Room {
-	r.conns = make(map[*conn]struct{}, 100)
+	r.conns = make(map[*connection]struct{}, 100)
 	return r
 }
 
-func (r *Room) Add(c *conn) {
+func (r *Room) Add(c *connection) {
 	r.l.Lock()
 	defer r.l.Unlock()
 
 	r.num++
-	r.conns[c] = make(struct{})
+	r.conns[c] = struct{}{}
 }
 
-func (r *Room) Del(c *conn) bool {
+func (r *Room) Del(c *connection) bool {
 	r.l.Lock()
 	defer r.l.Unlock()
 
@@ -98,7 +98,7 @@ type Rooms struct {
 }
 
 func (r *Rooms) init() {
-	r.conns = make(map[*conn]struct{}, 100)
+	r.rooms = make(map[string]*Room, 100)
 }
 
 func (m *Rooms) Get(id string) *Room {
@@ -111,21 +111,21 @@ func (m *Rooms) Get(id string) *Room {
 	return r
 }
 
-func (m *Room) Add(id string, r *room) {
+func (m *Rooms) Add(id string, r *Room) {
 	m.l.Lock()
 	defer m.l.Unlock()
 
 	m.rooms[id] = r
 }
 
-func (m *Room) Del(id string) {
+func (m *Rooms) Del(id string) {
 	m.l.Lock()
 	defer m.l.Unlock()
 
-	delete(m.conns, id)
+	delete(m.rooms, id)
 }
 
-func (m *Room) GC(id string) {
+func (m *Rooms) GC(id string) {
 	m.l.Lock()
 	defer m.l.Unlock()
 

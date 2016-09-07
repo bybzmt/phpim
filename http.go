@@ -1,6 +1,7 @@
 package phpim
 
 import (
+	"encoding/json"
 	"log"
 	"net"
 	"net/http"
@@ -21,11 +22,11 @@ func (im *IM) ServeWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ip := net.ParseIP(strings.Split(RemoteAddr, ":")[0])
+	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
 	num := im.addIPCounter(ip, 1)
 	defer im.addIPCounter(ip, -1)
 
-	if num > im.MaxSingleIp {
+	if num > im.MaxSingleIP {
 		log.Println("connections over", im.MaxSingleIP, r.RemoteAddr)
 		http.Error(w, "ip not allowed", 403)
 		return
@@ -39,25 +40,34 @@ func (im *IM) ServeWs(w http.ResponseWriter, r *http.Request) {
 
 	c := NewConn(ws, im)
 
-	err := im.connectCallback(c)
+	err = im.connectCallback(c, r)
 	if err != nil {
-		return;
+		log.Println(err)
+		return
 	}
 
-	defer im.disconnectCallback(ws)
+	defer func() {
+		err := im.disconnectCallback(c)
+		if err != nil {
+			log.Println(err)
+		}
+	}()
 
 	go c.writePump()
 
-	c.readPump(im)
+	err = c.readPump(im)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
-func (im *IM) ServeAction(w http.ResponseWriter, r *http.Request) {
+func (im *IM) SendMsg(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if e := recover(); e != nil {
 			if b, ok := e.(BadRequest); ok {
 				w.WriteHeader(http.StatusBadRequest)
 				enc := json.NewEncoder(w)
-				enc.Encode(Response{ret: 1, msg: string(b)})
+				enc.Encode(Response{Ret: 1, Msg: string(b)})
 			} else {
 				log.Println(e)
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -65,9 +75,9 @@ func (im *IM) ServeAction(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	ip := net.ParseIP(strings.Split(RemoteAddr, ":")[0])
+	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
 
-	allow = false
+	allow := false
 	for _, ipnet := range im.LocalIPs {
 		if ipnet.Contains(ip) {
 			allow = true
@@ -87,8 +97,8 @@ func (im *IM) ServeAction(w http.ResponseWriter, r *http.Request) {
 		panic(BadRequest("json decode err."))
 	}
 
-	serveAction(actions)
+	im.serveAction(actions)
 
 	enc := json.NewEncoder(w)
-	enc.Encode(Response{ret: 0, msg: "success."})
+	enc.Encode(Response{Ret: 0, Msg: "success."})
 }

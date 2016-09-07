@@ -8,8 +8,7 @@ import (
 	"net/url"
 )
 
-
-func (im *IM) connectCallback(c *conn) error {
+func (im *IM) connectCallback(c *connection, r *http.Request) error {
 	v := url.Values{}
 	for key, ma := range r.URL.Query() {
 		v.Add(key, ma[0])
@@ -24,26 +23,26 @@ func (im *IM) connectCallback(c *conn) error {
 
 	defer resp.Body.Close()
 
-	r := CallbackResponse{}
-	err = json.NewDecoder(resp.Body).Decode(&r)
+	rs := CallbackResponse{}
+	err = json.NewDecoder(resp.Body).Decode(&rs)
 	if err != nil {
 		return err
 	}
 
-	if r.Ret != 0 {
+	if rs.Ret != 0 {
 		return errors.New("callback return fail.")
 	}
 
-	c.Id = r.Id
+	c.Id = rs.Id
 
-	im.conns.Add(r.Id, c)
+	im.conns.Add(rs.Id, c)
 
-	im.serveAction(ca.actions)
+	im.serveAction(rs.Actions)
 
 	return nil
 }
 
-func (im *IM) msgCallback(c *conn, msg string) {
+func (im *IM) msgCallback(c *connection, msg string) error {
 	v := url.Values{}
 	v.Set("act", "msg")
 	v.Set("id", c.Id)
@@ -66,18 +65,19 @@ func (im *IM) msgCallback(c *conn, msg string) {
 		return errors.New("callback return fail.")
 	}
 
-	im.serveAction(ca.actions)
+	im.serveAction(r.Actions)
+
+	return nil
 }
 
-func (im *IM) disconnectCallback(c *conn) {
+func (im *IM) disconnectCallback(c *connection) error {
 	v := url.Values{}
 	v.Set("act", "disconnect")
 	v.Set("id", c.Id)
 
 	resp, err := http.PostForm(im.CallbackUrl, v)
 	if err != nil {
-		log.Println("callback url error: ", err)
-		return
+		return err
 	}
 
 	defer resp.Body.Close()
@@ -96,5 +96,7 @@ func (im *IM) disconnectCallback(c *conn) {
 		room.Del(c)
 	}
 
-	im.conns.Del(c.Id, c)
+	im.conns.Del(c.Id)
+
+	return nil
 }

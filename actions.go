@@ -9,14 +9,14 @@ const (
 	CloseConn
 	Broadcast
 	RoomBroadcast
-	ConnAddRoom
+	RoomAddConn
 	RoomDelConn
 )
 
 type BadRequest string
 
-func (e BadRequest) Error() {
-	return e
+func (e BadRequest) Error() string {
+	return string(e)
 }
 
 func (im *IM) serveAction(actions []Action) {
@@ -30,10 +30,10 @@ func (im *IM) serveAction(actions []Action) {
 			im.serveBroadcast(action.Point)
 		case RoomBroadcast:
 			im.serveRoomBroadcast(action.Point)
-		case ConnAddRoom:
-			im.serveConnAddRoom(action.Point)
+		case RoomAddConn:
+			im.serveRoomAddConn(action.Point)
 		case RoomDelConn:
-			im.serveConnAddRoom(action.Point)
+			im.serveRoomDelConn(action.Point)
 		default:
 			panic(BadRequest("action type err."))
 		}
@@ -93,7 +93,7 @@ func (im *IM) serveRoomBroadcast(raw json.RawMessage) {
 	r.Send(ac.Msg)
 }
 
-func (im *IM) serveConnAddRoom(raw json.RawMessage) {
+func (im *IM) serveRoomAddConn(raw json.RawMessage) {
 	ac := ActionConnAddRoom{}
 	err := json.Unmarshal(raw, &ac)
 	if err != nil {
@@ -114,7 +114,7 @@ func (im *IM) serveConnAddRoom(raw json.RawMessage) {
 	c.AddRoom(r)
 }
 
-func (im *IM) serveConnAddRoom(raw json.RawMessage) {
+func (im *IM) serveRoomDelConn(raw json.RawMessage) {
 	ac := ActionRoomDelConn{}
 	err := json.Unmarshal(raw, &ac)
 	if err != nil {
@@ -132,7 +132,7 @@ func (im *IM) serveConnAddRoom(raw json.RawMessage) {
 	}
 
 	empty := r.Del(c)
-	c.delRoom(r)
+	c.DelRoom(r)
 	if empty {
 		im.rooms.GC(ac.Room)
 	}

@@ -2,7 +2,10 @@ package main
 
 import (
 	"flag"
+	"github.com/bybzmt/phpim"
 	"log"
+	"net"
+	"net/http"
 	"runtime"
 	"strings"
 )
@@ -17,25 +20,33 @@ var maxSingleIP = flag.Int("maxSingleIP", 5, "max single ip conn num")
 func main() {
 	flag.Parse()
 
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	if *callback == "" {
-		log.Falteln("callback url can not empty.")
+		log.Fatalln("callback url can not empty.")
 	}
 
-	IPNets = make([]*net.IPNet, 0, 1)
+	IPNets := make([]net.IPNet, 0, 1)
 	for _, ip := range strings.Split(*localIP, ",") {
 		_, IPNet, err := net.ParseCIDR(ip)
 		if err == nil {
-			IPNets = append(IPNets, IPNet)
+			IPNets = append(IPNets, *IPNet)
 		}
 	}
 
-	origins = strings.Split(*origin, ",")
+	origins := strings.Split(*origin, ",")
 
 	im := phpim.NewIM()
 	im.Origins = origins
 	im.LocalIPs = IPNets
-	im.MaxSingleIP = *maxSingleIP
-	im.MaxConn = *maxConn
+	im.MaxSingleIP = int16(*maxSingleIP)
+	im.MaxConn = int32(*maxConn)
 
+	http.HandleFunc("/sendmsg", im.SendMsg)
+	http.HandleFunc("/ws", im.ServeWs)
+
+	err := http.ListenAndServe(*addr, nil)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
 }
-
