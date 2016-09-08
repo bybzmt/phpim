@@ -43,3 +43,14 @@ $on_disconnect = function($im) {
 
 $im = new phpim();
 $im->onCallback($on_connect, $on_msg, $on_disconnect);
+
+#主动请求
+#主动向im进行请求
+$im = new phpim();
+$im->sendMsg($conn_id, '单发');
+$im->Broadcast('全服群发');
+$im->RoomBroadcast($room_id, '房间内群发');
+
+//发送请求
+$im->doRequest($ip, $port);
+

@@ -1,6 +1,9 @@
 <?php
 namespace bybzmt\phpim;
 
+/**
+ * im服务封装
+ */
 class phpim
 {
 	const ACTION_SEND_MSG = 1;
@@ -10,9 +13,18 @@ class phpim
 	const ACTION_ROOM_ADD_CONN = 5;
 	const ACTION_ROOM_DEL_CONN = 6;
 
+	static public $host;
+
 	private $_actions = array();
 
-	public function onCallback($on_connect, $on_msg, $on_disconnect)
+	/**
+	 * callback时动作
+	 *
+	 * @param callable on_connect($im) 在有新连接时回调
+	 * @param callable on_msg($im, $conn_id, $msg) 新消息时回调
+	 * @param callable on_disconnect($im, $conn_id) 连接断开时回调
+	 */
+	public function onCallback(callable $on_connect, callable $on_msg, callable $on_disconnect)
 	{
 		$act = isset($_REQUEST['act']) ? $_REQUEST['act'] : '';
 
@@ -20,19 +32,19 @@ class phpim
 
 		switch ($act) {
 		case 'connect' :
-			$resp = $on_connect($this);
+			$resp = call_user_func($on_connect, $this);
 			break;
 
 		case 'msg' :
 			$id = isset($_REQUEST['id']) ? $_REQUEST['id'] : '';
 			$msg = isset($_REQUEST['msg']) ? $_REQUEST['msg'] : '';
 
-			$resp = $on_msg($this, $id, $msg);
+			$resp = call_user_func($on_msg, $this, $id, $msg);
 			break;
 
 		case 'disconnect' :
 			$id = isset($_REQUEST['id']) ? $_REQUEST['id'] : '';
-			$resp = $on_disconnect($this, $id);
+			$resp = call_user_func($on_disconnect, $this, $id);
 			break;
 
 		default:
@@ -42,28 +54,35 @@ class phpim
 		echo json_encode($resp);
 	}
 
-	public function doRequest($ip, $port)
+	public function doRequest($host=null)
 	{
-		$url = "http://{$ip}:{$port}/actions";
+		if (!$host) {
+			$host = self::$host;
+		}
+		$url = "http://{$host}/actions";
 
 		$opts = array(
 			'http'=>array(
 				'method'=> 'POST',
-				'header' => 'Content-type: application/json',
+				'header' => implode("\r\n", array(
+					'Content-type: application/json',
+					"Connection: close",
+				)),
 				'content' => json_encode($this->_actions),
 				'ignore_errors' => true,
 			)
 		);
 
 		$context = stream_context_create($opts);
-		file_get_contents($url, false, $context);
+		$out = file_get_contents($url, false, $context);
+		return $out;
 	}
 
 	public function setOk($id=null)
 	{
 		return array(
-			'Ret' => 1,
-			'Id' => $id,
+			'Ret' => 0,
+			'Id' => "$id",
 			'Actions' => $this->_actions,
 		);
 	}
@@ -72,7 +91,7 @@ class phpim
 	{
 		return array(
 			'Ret' => 1,
-			'Id' => null,
+			'Id' => '',
 			'Actions' => $this->_actions,
 		);
 	}
@@ -87,7 +106,7 @@ class phpim
 		$this->_actions[] = array(
 			'Type' => self::ACTION_SEND_MSG,
 			'Point' => array(
-				'Conn' => $conn_id,
+				'Conn' => "$conn_id",
 				'Msg' => $msg,
 			),
 		);
@@ -100,7 +119,7 @@ class phpim
 		$this->_actions[] = array(
 			'Type' => self::ACTION_CLOSE_CONN,
 			'Point' => array(
-				'Conn' => $conn_id,
+				'Conn' => "$conn_id",
 			),
 		);
 
@@ -113,7 +132,7 @@ class phpim
 			'Type' => self::ACTION_BROADCAST,
 			'Point' => array(
 				'Msg' => $msg,
-			),
+			)
 		);
 
 		return $this;
@@ -124,7 +143,7 @@ class phpim
 		$this->_actions[] = array(
 			'Type' => self::ACTION_ROOM_BROADCAST,
 			'Point' => array(
-				'Room' => $room_id,
+				'Room' => "$room_id",
 				'Msg' => $msg,
 			),
 		);
@@ -137,8 +156,8 @@ class phpim
 		$this->_actions[] = array(
 			'Type' => self::ACTION_ROOM_ADD_CONN,
 			'Point' => array(
-				'Room' => $room_id,
-				'Msg' => $msg,
+				'Room' => "$room_id",
+				'Conn' => $conn_id,
 			),
 		);
 
@@ -150,8 +169,8 @@ class phpim
 		$this->_actions[] = array(
 			'Type' => self::ACTION_ROOM_DEL_CONN,
 			'Point' => array(
-				'Room' => $room_id,
-				'Msg' => $msg,
+				'Room' => "$room_id",
+				'Conn' => $conn_id,
 			),
 		);
 

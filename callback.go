@@ -3,12 +3,21 @@ package phpim
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"net/url"
 )
 
-func (im *IM) connectCallback(c *connection, r *http.Request) error {
+func (im *IM) connectCallback(c *connection, r *http.Request) (err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			if b, ok := e.(BadRequest); ok {
+				err = b
+			} else {
+				panic(e)
+			}
+		}
+	}()
+
 	v := url.Values{}
 	for key, ma := range r.URL.Query() {
 		v.Add(key, ma[0])
@@ -42,7 +51,17 @@ func (im *IM) connectCallback(c *connection, r *http.Request) error {
 	return nil
 }
 
-func (im *IM) msgCallback(c *connection, msg string) error {
+func (im *IM) msgCallback(c *connection, msg string) (err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			if b, ok := e.(BadRequest); ok {
+				err = b
+			} else {
+				panic(e)
+			}
+		}
+	}()
+
 	v := url.Values{}
 	v.Set("act", "msg")
 	v.Set("id", c.Id)
@@ -70,7 +89,17 @@ func (im *IM) msgCallback(c *connection, msg string) error {
 	return nil
 }
 
-func (im *IM) disconnectCallback(c *connection) error {
+func (im *IM) disconnectCallback(c *connection) (err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			if b, ok := e.(BadRequest); ok {
+				err = b
+			} else {
+				panic(e)
+			}
+		}
+	}()
+
 	v := url.Values{}
 	v.Set("act", "disconnect")
 	v.Set("id", c.Id)
@@ -89,7 +118,7 @@ func (im *IM) disconnectCallback(c *connection) error {
 	}
 
 	if r.Ret != 0 {
-		log.Println(errors.New("callback return fail."))
+		return errors.New("callback return fail.")
 	}
 
 	for _, room := range c.rooms {

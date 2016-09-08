@@ -12,7 +12,7 @@ import (
 
 var addr = flag.String("addr", ":2000", "listen addr:port")
 var callback = flag.String("callback", "", "callback url")
-var origin = flag.String("origin", "localhost", "allow origin domain")
+var origin = flag.String("origin", "*", "allow origin domain")
 var localIP = flag.String("localIP", "127.0.0.0/8,10.0.0.0/8,172.17.0.0/16,192.168.0.0/16", "allow local ip access")
 var maxConn = flag.Int("maxConn", 10000, "max conn num")
 var maxSingleIP = flag.Int("maxSingleIP", 5, "max single ip conn num")
@@ -41,6 +41,7 @@ func main() {
 	im.LocalIPs = IPNets
 	im.MaxSingleIP = int16(*maxSingleIP)
 	im.MaxConn = int32(*maxConn)
+	im.CallbackUrl = *callback
 
 	http.HandleFunc("/actions", im.SendMsg)
 	http.HandleFunc("/ws", im.ServeWs)

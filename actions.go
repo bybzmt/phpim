@@ -44,22 +44,22 @@ func (im *IM) serveSendMsg(raw json.RawMessage) {
 	ac := ActionSendMsg{}
 	err := json.Unmarshal(raw, &ac)
 	if err != nil {
-		panic(BadRequest("action json decode err"))
+		panic(BadRequest("SendMsg action json decode err:" + err.Error()))
 	}
 
 	c := im.conns.Get(ac.Conn)
-	if c != nil {
-		panic(BadRequest("conn not found."))
+	if c == nil {
+		panic(BadRequest("SendMsg conn not found."))
 	}
 
-	c.Send(ac.Msg)
+	c.Send([]byte(ac.Msg))
 }
 
 func (im *IM) serveCloseConn(raw json.RawMessage) {
 	ac := ActionCloseConn{}
 	err := json.Unmarshal(raw, &ac)
 	if err != nil {
-		panic(BadRequest("action json decode err"))
+		panic(BadRequest("CloseConn action json decode err" + err.Error()))
 	}
 
 	c := im.conns.Get(ac.Conn)
@@ -72,42 +72,42 @@ func (im *IM) serveBroadcast(raw json.RawMessage) {
 	ac := ActionBroadcast{}
 	err := json.Unmarshal(raw, &ac)
 	if err != nil {
-		panic(BadRequest("action json decode err"))
+		panic(BadRequest("Broadcast action json decode err:" + err.Error()))
 	}
 
-	im.conns.Send(ac.Msg)
+	im.conns.Send([]byte(ac.Msg))
 }
 
 func (im *IM) serveRoomBroadcast(raw json.RawMessage) {
 	ac := ActionRoomBroadcast{}
 	err := json.Unmarshal(raw, &ac)
 	if err != nil {
-		panic(BadRequest("action json decode err"))
+		panic(BadRequest("RoomBroadcast action json decode err" + err.Error()))
 	}
 
 	r := im.rooms.Get(ac.Room)
 	if r == nil {
-		panic(BadRequest("room not found."))
+		panic(BadRequest("RoomBroadcast room not found."))
 	}
 
-	r.Send(ac.Msg)
+	r.Send([]byte(ac.Msg))
 }
 
 func (im *IM) serveRoomAddConn(raw json.RawMessage) {
 	ac := ActionConnAddRoom{}
 	err := json.Unmarshal(raw, &ac)
 	if err != nil {
-		panic(BadRequest("action json decode err"))
+		panic(BadRequest("RoomAddConn action json decode err" + err.Error()))
 	}
 
 	r := im.rooms.Get(ac.Room)
 	c := im.conns.Get(ac.Conn)
 	if r == nil {
-		panic(BadRequest("room not found."))
+		panic(BadRequest("RoomAddConn room not found."))
 	}
 
 	if c == nil {
-		panic(BadRequest("conn not found."))
+		panic(BadRequest("RoomAddConn conn not found."))
 	}
 
 	r.Add(c)
@@ -118,17 +118,17 @@ func (im *IM) serveRoomDelConn(raw json.RawMessage) {
 	ac := ActionRoomDelConn{}
 	err := json.Unmarshal(raw, &ac)
 	if err != nil {
-		panic(BadRequest("action json decode err"))
+		panic(BadRequest("RoomDelConn action json decode err" + err.Error()))
 	}
 
 	r := im.rooms.Get(ac.Room)
 	c := im.conns.Get(ac.Conn)
 	if r == nil {
-		panic(BadRequest("room not found."))
+		panic(BadRequest("RoomDelConn room not found."))
 	}
 
 	if c == nil {
-		panic(BadRequest("conn not found."))
+		panic(BadRequest("RoomDelConn conn not found."))
 	}
 
 	empty := r.Del(c)

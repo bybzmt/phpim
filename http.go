@@ -42,14 +42,14 @@ func (im *IM) ServeWs(w http.ResponseWriter, r *http.Request) {
 
 	err = im.connectCallback(c, r)
 	if err != nil {
-		log.Println(err)
+		log.Println("connectCallback:", err)
 		return
 	}
 
 	defer func() {
 		err := im.disconnectCallback(c)
 		if err != nil {
-			log.Println(err)
+			log.Println("disconnectCallback:", err)
 		}
 
 		//从所有房间内删除自己
@@ -68,7 +68,7 @@ func (im *IM) ServeWs(w http.ResponseWriter, r *http.Request) {
 
 	err = c.readPump(im)
 	if err != nil {
-		log.Println(err)
+		log.Println("readPump:", err)
 	}
 }
 
@@ -103,9 +103,9 @@ func (im *IM) SendMsg(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var actions []Action
-	err := json.NewDecoder(r.Body).Decode(actions)
+	err := json.NewDecoder(r.Body).Decode(&actions)
 	if err != nil {
-		panic(BadRequest("json decode err."))
+		panic(BadRequest("json decode err: " + err.Error()))
 	}
 
 	im.serveAction(actions)

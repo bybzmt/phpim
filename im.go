@@ -52,11 +52,13 @@ func (im *IM) addIPCounter(ip net.IP, i int16) int16 {
 	im.L.Lock()
 	defer im.L.Unlock()
 
-	im.IPCounter[ip.String()] += i
+	tmp := ip.String()
 
-	num := im.IPCounter[ip.String()]
+	im.IPCounter[tmp] += i
+
+	num := im.IPCounter[tmp]
 	if num < 1 {
-		delete(im.IPCounter, ip.String())
+		delete(im.IPCounter, tmp)
 	}
 
 	return num

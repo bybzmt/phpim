@@ -17,7 +17,7 @@ type Action struct {
 
 type ActionSendMsg struct {
 	Conn string
-	Msg  []byte
+	Msg  string
 }
 
 type ActionCloseConn struct {
@@ -25,12 +25,12 @@ type ActionCloseConn struct {
 }
 
 type ActionBroadcast struct {
-	Msg []byte
+	Msg string
 }
 
 type ActionRoomBroadcast struct {
 	Room string
-	Msg  []byte
+	Msg  string
 }
 
 type ActionConnAddRoom struct {

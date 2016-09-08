@@ -32,14 +32,14 @@ func (r *Global) Del(id string) {
 
 func (r *Global) Get(id string) *connection {
 	r.l.RLock()
-	defer r.l.RLock()
+	defer r.l.RUnlock()
 
 	return r.conns[id]
 }
 
 func (r *Global) Send(msg []byte) {
 	r.l.RLock()
-	defer r.l.RLock()
+	defer r.l.RUnlock()
 
 	for _, conn := range r.conns {
 		conn.Send(msg)
@@ -85,7 +85,7 @@ func (r *Room) Del(c *connection) bool {
 
 func (r *Room) Send(msg []byte) {
 	r.l.RLock()
-	defer r.l.RLock()
+	defer r.l.RUnlock()
 
 	for conn, _ := range r.conns {
 		conn.Send(msg)
@@ -108,7 +108,8 @@ func (m *Rooms) Get(id string) *Room {
 	defer m.l.Unlock()
 	r, ok := m.rooms[id]
 	if !ok {
-		m.rooms[id] = new(Room).init(id)
+		r = new(Room).init(id)
+		m.rooms[id] = r
 	}
 	return r
 }

@@ -18,7 +18,7 @@ type connection struct {
 
 func NewConn(ws *websocket.Conn, im *IM) *connection {
 	c := &connection{
-		send: make(chan []byte, 256),
+		send: make(chan []byte, 64),
 		ws:   ws,
 		im:   im,
 	}
