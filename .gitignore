@@ -1,0 +1,11 @@
+
+#编译文件
+/cmd/client
+/cmd/phpim
+
+#vim临时文件
+*.swp
+*~
+
+#不排除占位文件
+!.empty
