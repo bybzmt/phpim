@@ -51,11 +51,13 @@ func (r *Global) Send(msg []byte) {
 type Room struct {
 	l     sync.RWMutex
 	num   int
+	name  string
 	conns map[*connection]struct{}
 }
 
-func (r *Room) init() *Room {
+func (r *Room) init(name string) *Room {
 	r.conns = make(map[*connection]struct{}, 100)
+	r.name = name
 	return r
 }
 
@@ -106,7 +108,7 @@ func (m *Rooms) Get(id string) *Room {
 	defer m.l.Unlock()
 	r, ok := m.rooms[id]
 	if !ok {
-		m.rooms[id] = new(Room).init()
+		m.rooms[id] = new(Room).init(id)
 	}
 	return r
 }

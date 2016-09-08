@@ -134,6 +134,6 @@ func (im *IM) serveRoomDelConn(raw json.RawMessage) {
 	empty := r.Del(c)
 	c.DelRoom(r)
 	if empty {
-		im.rooms.GC(ac.Room)
+		im.rooms.GC(r.name)
 	}
 }

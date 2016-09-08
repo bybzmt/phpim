@@ -51,6 +51,17 @@ func (im *IM) ServeWs(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Println(err)
 		}
+
+		//从所有房间内删除自己
+		for _, r := range c.rooms {
+			empty := r.Del(c)
+			if empty {
+				im.rooms.GC(r.name)
+			}
+		}
+
+		//清理连接
+		im.conns.Del(c.Id)
 	}()
 
 	go c.writePump()

@@ -42,7 +42,7 @@ func main() {
 	im.MaxSingleIP = int16(*maxSingleIP)
 	im.MaxConn = int32(*maxConn)
 
-	http.HandleFunc("/sendmsg", im.SendMsg)
+	http.HandleFunc("/actions", im.SendMsg)
 	http.HandleFunc("/ws", im.ServeWs)
 
 	err := http.ListenAndServe(*addr, nil)
