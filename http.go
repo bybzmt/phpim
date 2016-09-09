@@ -26,7 +26,7 @@ func (im *IM) ServeWs(w http.ResponseWriter, r *http.Request) {
 	defer im.addIPCounter(ip, -1)
 
 	if num > im.MaxSingleIP {
-		log.Println("connections over", im.MaxSingleIP, r.RemoteAddr)
+		log.Println("connections over", im.MaxSingleIP, ip.String())
 		http.Error(w, "ip not allowed", 403)
 		return
 	}
