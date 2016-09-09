@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 )
@@ -17,6 +18,7 @@ type IM struct {
 	IPCounter   map[string]int16
 	CallbackUrl string
 	MaxConn     int32
+	RealIP      string
 	conns       Global
 	rooms       Rooms
 	MaxMsgSize  int64
@@ -46,6 +48,21 @@ func NewIM() *IM {
 	}
 
 	return im
+}
+
+func (im *IM) getIP(r *http.Request) net.IP {
+	var tmp string
+
+	if im.RealIP == "" {
+		tmp = strings.Split(r.RemoteAddr, ":")[0]
+	} else {
+		tmp = strings.Split(r.Header.Get(im.RealIP), ",")[0]
+		if tmp == "" {
+			tmp = strings.Split(r.RemoteAddr, ":")[0]
+		}
+	}
+
+	return net.ParseIP(tmp)
 }
 
 func (im *IM) addIPCounter(ip net.IP, i int16) int16 {

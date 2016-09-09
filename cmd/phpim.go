@@ -16,6 +16,7 @@ var origin = flag.String("origin", "*", "allow origin domain")
 var localIP = flag.String("localIP", "127.0.0.0/8,10.0.0.0/8,172.17.0.0/16,192.168.0.0/16", "allow local ip access")
 var maxConn = flag.Int("maxConn", 10000, "max conn num")
 var maxSingleIP = flag.Int("maxSingleIP", 5, "max single ip conn num")
+var realip = flag.String("realip", "", "real ip header")
 
 func main() {
 	flag.Parse()
@@ -42,6 +43,7 @@ func main() {
 	im.MaxSingleIP = int16(*maxSingleIP)
 	im.MaxConn = int32(*maxConn)
 	im.CallbackUrl = *callback
+	im.RealIP = *realip
 
 	http.HandleFunc("/actions", im.SendMsg)
 	http.HandleFunc("/ws", im.ServeWs)

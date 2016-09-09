@@ -3,9 +3,7 @@ package phpim
 import (
 	"encoding/json"
 	"log"
-	"net"
 	"net/http"
-	"strings"
 	"sync/atomic"
 )
 
@@ -22,7 +20,8 @@ func (im *IM) ServeWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
+	ip := im.getIP(r)
+
 	num := im.addIPCounter(ip, 1)
 	defer im.addIPCounter(ip, -1)
 
@@ -86,7 +85,7 @@ func (im *IM) SendMsg(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
+	ip := im.getIP(r)
 
 	allow := false
 	for _, ipnet := range im.LocalIPs {
