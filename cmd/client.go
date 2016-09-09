@@ -29,6 +29,13 @@ func client() {
 	}
 	defer ws.Close()
 
+	go func() {
+		c := time.Tick(10 * time.Second)
+		for _ = range c {
+			ws.WriteMessage(websocket.TextMessage, []byte("测试"))
+		}
+	}()
+
 	for {
 		_, msg, err = ws.ReadMessage()
 		if err != nil {
@@ -52,7 +59,7 @@ func main() {
 		go client()
 	}
 
-	c := time.Tick(3 * time.Second)
+	c := time.Tick(10 * time.Second)
 	for _ = range c {
 		now()
 	}

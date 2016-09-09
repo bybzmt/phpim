@@ -18,14 +18,11 @@ func (im *IM) connectCallback(c *connection, r *http.Request) (err error) {
 		}
 	}()
 
-	v := url.Values{}
-	for key, ma := range r.URL.Query() {
-		v.Add(key, ma[0])
-	}
+	//将连接时的参数传给回调接口，并设置动作类型
+	r.ParseForm()
+	r.Form.Set("act", "connect")
 
-	v.Set("act", "connect")
-
-	resp, err := http.PostForm(im.CallbackUrl, v)
+	resp, err := http.PostForm(im.CallbackUrl, r.Form)
 	if err != nil {
 		return err
 	}
