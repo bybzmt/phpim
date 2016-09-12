@@ -65,13 +65,19 @@ func (r *Room) Add(c *connection) {
 	r.l.Lock()
 	defer r.l.Unlock()
 
-	r.num++
+	if _, ok := r.conns[c]; !ok {
+		r.num++
+	}
 	r.conns[c] = struct{}{}
 }
 
 func (r *Room) Del(c *connection) bool {
 	r.l.Lock()
 	defer r.l.Unlock()
+
+	if _, ok := r.conns[c]; !ok {
+		return false
+	}
 
 	r.num--
 	delete(r.conns, c)

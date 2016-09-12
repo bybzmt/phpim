@@ -49,7 +49,8 @@ func (im *IM) serveSendMsg(raw json.RawMessage) {
 
 	c := im.conns.Get(ac.Conn)
 	if c == nil {
-		panic(BadRequest("SendMsg conn not found."))
+		//panic(BadRequest("SendMsg conn not found."))
+		return
 	}
 
 	c.Send([]byte(ac.Msg))
@@ -87,10 +88,15 @@ func (im *IM) serveRoomBroadcast(raw json.RawMessage) {
 
 	r := im.rooms.Get(ac.Room)
 	if r == nil {
-		panic(BadRequest("RoomBroadcast room not found."))
+		//panic(BadRequest("RoomBroadcast room not found."))
+		return
 	}
 
 	r.Send([]byte(ac.Msg))
+
+	if r.num < 1 {
+		im.rooms.GC(r.name)
+	}
 }
 
 func (im *IM) serveRoomAddConn(raw json.RawMessage) {
@@ -103,11 +109,13 @@ func (im *IM) serveRoomAddConn(raw json.RawMessage) {
 	r := im.rooms.Get(ac.Room)
 	c := im.conns.Get(ac.Conn)
 	if r == nil {
-		panic(BadRequest("RoomAddConn room not found."))
+		//panic(BadRequest("RoomAddConn room not found."))
+		return
 	}
 
 	if c == nil {
-		panic(BadRequest("RoomAddConn conn not found."))
+		//panic(BadRequest("RoomAddConn conn not found."))
+		return
 	}
 
 	r.Add(c)
@@ -124,11 +132,13 @@ func (im *IM) serveRoomDelConn(raw json.RawMessage) {
 	r := im.rooms.Get(ac.Room)
 	c := im.conns.Get(ac.Conn)
 	if r == nil {
-		panic(BadRequest("RoomDelConn room not found."))
+		//panic(BadRequest("RoomDelConn room not found."))
+		return
 	}
 
 	if c == nil {
-		panic(BadRequest("RoomDelConn conn not found."))
+		//panic(BadRequest("RoomDelConn conn not found."))
+		return
 	}
 
 	empty := r.Del(c)
